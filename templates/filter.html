@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+
+{% block title %}Φιλτράρισμα Αρχείου Excel{% endblock %}
+
+{% block additional_styles %}
+.file-section {
+    border: 2px dashed #ccc;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+    background-color: #f8f9fa;
+}
+.file-section.dragover {
+    border-color: #0d6efd;
+    background-color: #e9ecef;
+}
+.hidden {
+    display: none;
+}
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <h1 class="mb-4">Φιλτράρισμα Αρχείου Excel</h1>
+        <p class="lead mb-4">Φιλτράρετε ένα αρχείο Excel για να εξαγάγετε γραμμές με συγκεκριμένη τιμή σε επιλεγμένη στήλη.</p>
+        
+        <form method="post" enctype="multipart/form-data">
+            <div class="mb-3">
+                <label for="file" class="form-label">Επιλέξτε Αρχείο Excel</label>
+                <input type="file" class="form-control" id="file" name="file" accept=".xlsx,.xls" required>
+            </div>
+            
+            <div class="mb-3">
+                <label for="column" class="form-label">Επιλέξτε Στήλη</label>
+                <select class="form-select" id="column" name="column" required>
+                    <option value="">Επιλέξτε στήλη...</option>
+                </select>
+            </div>
+            
+            <div class="mb-3">
+                <label for="value" class="form-label">Επιλέξτε Τιμή</label>
+                <select class="form-select" id="value" name="value" required>
+                    <option value="">Επιλέξτε τιμή...</option>
+                </select>
+            </div>
+            
+            <button type="submit" class="btn btn-primary">Φιλτράρισμα Αρχείου</button>
+        </form>
+        
+        {% if error %}
+        <div class="alert alert-danger mt-3">
+            {{ error }}
+        </div>
+        {% endif %}
+        
+        {% if success %}
+        <div class="alert alert-success mt-3">
+            {{ success }}
+        </div>
+        {% endif %}
+        
+        {% if download_link %}
+        <div class="mt-4">
+            <h4>Λήψη Φιλτραρισμένου Αρχείου:</h4>
+            <div class="list-group">
+                <a href="{{ download_link.url }}" class="list-group-item list-group-item-action">
+                    <i class="bi bi-download"></i> {{ download_link.filename }}
+                </a>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+document.getElementById('file').addEventListener('change', function() {
+    const file = this.files[0];
+    if (file) {
+        const formData = new FormData();
+        formData.append('file', file);
+        
+        fetch('/get-columns', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            const columnSelect = document.getElementById('column');
+            columnSelect.innerHTML = '<option value="">Επιλέξτε στήλη...</option>';
+            
+            data.columns.forEach(column => {
+                const option = document.createElement('option');
+                option.value = column;
+                option.textContent = column;
+                columnSelect.appendChild(option);
+            });
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+    }
+});
+
+document.getElementById('column').addEventListener('change', function() {
+    const column = this.value;
+    const file = document.getElementById('file').files[0];
+    
+    if (column && file) {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('column', column);
+        
+        fetch('/column-values', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            const valueSelect = document.getElementById('value');
+            valueSelect.innerHTML = '<option value="">Επιλέξτε τιμή...</option>';
+            
+            data.values.forEach(value => {
+                const option = document.createElement('option');
+                option.value = value;
+                option.textContent = value;
+                valueSelect.appendChild(option);
+            });
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+    }
+});
+</script>
+{% endblock %} 

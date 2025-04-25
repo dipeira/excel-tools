@@ -1,0 +1,170 @@
+{% extends "base.html" %}
+
+{% block title %}Excel Tools - Σύγκριση Αρχείων Excel{% endblock %}
+
+{% block additional_styles %}
+.file-section {
+    border: 2px dashed #ccc;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+    background-color: #f8f9fa;
+}
+.file-section.dragover {
+    border-color: #0d6efd;
+    background-color: #e9ecef;
+}
+.hidden {
+    display: none;
+}
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-10">
+        <h1 class="text-center mb-4">Σύγκριση Αρχείων Excel</h1>
+        
+        <div class="row">
+            <!-- File 1 Section -->
+            <div class="col-md-6">
+                <div class="file-section" id="file1-section">
+                    <h3>Αρχείο 1</h3>
+                    <div class="mb-3">
+                        <input type="file" class="form-control" id="file1" accept=".xlsx">
+                    </div>
+                    <div id="columns1" class="hidden">
+                        <label class="form-label">Επιλέξτε Στήλη:</label>
+                        <select class="form-select" id="col1"></select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- File 2 Section -->
+            <div class="col-md-6">
+                <div class="file-section" id="file2-section">
+                    <h3>Αρχείο 2</h3>
+                    <div class="mb-3">
+                        <input type="file" class="form-control" id="file2" accept=".xlsx">
+                    </div>
+                    <div id="columns2" class="hidden">
+                        <label class="form-label">Επιλέξτε Στήλη:</label>
+                        <select class="form-select" id="col2"></select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="text-center mt-4">
+            <button class="btn btn-primary btn-lg" id="compareBtn" disabled>Σύγκριση Αρχείων</button>
+        </div>
+
+        <div id="error" class="alert alert-danger mt-3 hidden"></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let file1Name = '';
+    let file2Name = '';
+
+    function handleFileUpload(fileInput, columnsDiv, columnSelect, fileNumber) {
+        const file = fileInput.files[0];
+        if (!file) return;
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        fetch('/upload', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                showError(data.error);
+                return;
+            }
+
+            if (fileNumber === 1) {
+                file1Name = data.filename;
+            } else {
+                file2Name = data.filename;
+            }
+
+            columnSelect.innerHTML = '';
+            data.columns.forEach(column => {
+                const option = document.createElement('option');
+                option.value = column;
+                option.textContent = column;
+                columnSelect.appendChild(option);
+            });
+
+            columnsDiv.classList.remove('hidden');
+            updateCompareButton();
+        })
+        .catch(error => showError('Σφάλμα κατά την μεταφόρτωση αρχείου: ' + error));
+    }
+
+    function showError(message) {
+        const errorDiv = document.getElementById('error');
+        errorDiv.textContent = message;
+        errorDiv.classList.remove('hidden');
+    }
+
+    function updateCompareButton() {
+        const compareBtn = document.getElementById('compareBtn');
+        const col1 = document.getElementById('col1').value;
+        const col2 = document.getElementById('col2').value;
+        
+        compareBtn.disabled = !(file1Name && file2Name && col1 && col2);
+    }
+
+    document.getElementById('file1').addEventListener('change', (e) => {
+        handleFileUpload(e.target, document.getElementById('columns1'), 
+                       document.getElementById('col1'), 1);
+    });
+
+    document.getElementById('file2').addEventListener('change', (e) => {
+        handleFileUpload(e.target, document.getElementById('columns2'), 
+                       document.getElementById('col2'), 2);
+    });
+
+    document.getElementById('col1').addEventListener('change', updateCompareButton);
+    document.getElementById('col2').addEventListener('change', updateCompareButton);
+
+    document.getElementById('compareBtn').addEventListener('click', () => {
+        const data = {
+            file1: file1Name,
+            file2: file2Name,
+            col1: document.getElementById('col1').value,
+            col2: document.getElementById('col2').value
+        };
+
+        fetch('/compare', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => {
+            if (response.ok) {
+                return response.blob();
+            }
+            throw new Error('Σφάλμα σύγκρισης αρχείων');
+        })
+        .then(blob => {
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'comparison_result.xlsx';
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            a.remove();
+        })
+        .catch(error => showError('Σφάλμα σύγκρισης αρχείων: ' + error));
+    });
+</script>
+{% endblock %} 

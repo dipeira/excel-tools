@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block title %}Εργαλεία Excel - Αρχική{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-10 text-center">
+        <h1 class="mb-4">Εργαλεία Excel</h1>
+        <p class="lead mb-5">Μια συλλογή χρήσιμων εργαλείων για εργασία με αρχεία Excel</p>
+        
+        <div class="row">
+            <div class="col-md-3 mb-4">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <span class="material-icons">compare_arrows</span>
+                        <h5 class="card-title">Σύγκριση Αρχείων Excel</h5>
+                        <p class="card-text">Συγκρίνετε δύο αρχεία Excel με βάση επιλεγμένες στήλες και βρείτε τις διαφορές μεταξύ τους.</p>
+                        <a href="/compare" class="btn btn-primary">Χρήση Εργαλείου</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-4">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <span class="material-icons">join_inner</span>
+                        <h5 class="card-title">Συγχώνευση Αρχείων Excel</h5>
+                        <p class="card-text">Συγχωνεύστε δύο αρχεία Excel με βάση μια κοινή στήλη, συνδυάζοντας όλες τις στήλες και από τα δύο αρχεία.</p>
+                        <a href="/join" class="btn btn-primary">Χρήση Εργαλείου</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-4">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <span class="material-icons">filter_alt</span>
+                        <h5 class="card-title">Φιλτράρισμα Αρχείου Excel</h5>
+                        <p class="card-text">Φιλτράρετε ένα αρχείο Excel για να εξαγάγετε γραμμές με συγκεκριμένη τιμή σε επιλεγμένη στήλη.</p>
+                        <a href="/filter" class="btn btn-primary">Χρήση Εργαλείου</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-4">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <span class="material-icons">content_cut</span>
+                        <h5 class="card-title">Διαχωρισμός Αρχείου Excel</h5>
+                        <p class="card-text">Διαχωρίστε ένα αρχείο Excel σε πολλαπλά αρχεία με βάση μοναδικές τιμές σε επιλεγμένη στήλη.</p>
+                        <a href="/split" class="btn btn-primary">Χρήση Εργαλείου</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 
