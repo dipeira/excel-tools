@@ -1,0 +1,326 @@
+{% extends "base.html" %}
+
+{% block title %}Excel σε Word/PDF{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="mb-4">Excel σε Word/PDF</h1>
+    <p class="lead mb-4">Δημιουργήστε πολλαπλά έγγραφα Word/PDF από ένα αρχείο Excel και ένα πρότυπο Word.</p>
+
+    <!-- File Upload Section -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <span class="step-number">1</span>
+            <span class="h5">Επιλογή Αρχείων</span>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="upload-area" id="excelUpload">
+                        <i class="fas fa-file-excel fa-3x text-success mb-2"></i>
+                        <h5>Excel Αρχείο</h5>
+                        <p class="text-muted" id="excelText">Κάντε κλικ ή σύρετε το αρχείο εδώ</p>
+                        <p class="text-success mb-0" id="excelFileName" style="display: none;"></p>
+                        <input type="file" class="file-input" id="excelFile" accept=".xlsx,.xls">
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="upload-area" id="wordUpload">
+                        <i class="fas fa-file-word fa-3x text-primary mb-2"></i>
+                        <h5>Word Template</h5>
+                        <p class="text-muted" id="wordText">Κάντε κλικ ή σύρετε το αρχείο εδώ</p>
+                        <p class="text-primary mb-0" id="wordFileName" style="display: none;"></p>
+                        <input type="file" class="file-input" id="wordFile" accept=".docx">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mapping Section -->
+    <div class="card mb-4" id="mappingCard" style="display: none;">
+        <div class="card-header">
+            <span class="step-number">2</span>
+            <span class="h5">Αντιστοίχιση Πεδίων</span>
+        </div>
+        <div class="card-body">
+            <div class="form-group mb-3">
+                <label for="keyColumn">Επιλέξτε στήλη για ονόματα αρχείων:</label>
+                <select class="form-select" id="keyColumn"></select>
+            </div>
+            <div class="mapping-container" id="mappingContainer"></div>
+        </div>
+    </div>
+
+    <!-- Export Options -->
+    <div class="card mb-4" id="exportCard" style="display: none;">
+        <div class="card-header">
+            <span class="step-number">3</span>
+            <span class="h5">Επιλογές Εξαγωγής</span>
+        </div>
+        <div class="card-body">
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="exportWord" value="docx" checked>
+                <label class="form-check-label" for="exportWord">Word (.docx)</label>
+            </div>
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="exportPdf" value="pdf">
+                <label class="form-check-label" for="exportPdf">PDF (.pdf)</label>
+            </div>
+        </div>
+    </div>
+
+    <!-- Generate Button -->
+    <button class="btn btn-primary btn-lg" id="generateBtn" style="display: none;">Δημιουργία Εγγράφων</button>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" style="display: none;">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Φόρτωση...</span>
+        </div>
+        <p class="mt-2">Παρακαλώ περιμένετε...</p>
+    </div>
+
+    <!-- Status Message -->
+    <div id="statusMessage" class="alert mt-3" style="display: none;"></div>
+</div>
+
+<style>
+.upload-area {
+    border: 2px dashed #dee2e6;
+    border-radius: 5px;
+    padding: 2rem;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.3s;
+}
+
+.upload-area:hover {
+    border-color: #007bff;
+}
+
+.file-input {
+    display: none;
+}
+
+.step-number {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background-color: #007bff;
+    color: white;
+    font-size: 14px;
+    margin-right: 8px;
+}
+
+#loadingOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(255, 255, 255, 0.8);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    let excelData = null;
+    let wordData = null;
+
+    // File Upload Handlers
+    ['excel', 'word'].forEach(type => {
+        const uploadArea = document.getElementById(`${type}Upload`);
+        const fileInput = document.getElementById(`${type}File`);
+        const fileNameElement = document.getElementById(`${type}FileName`);
+        const textElement = document.getElementById(`${type}Text`);
+
+        uploadArea.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            uploadArea.style.borderColor = '#007bff';
+        });
+
+        uploadArea.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            uploadArea.style.borderColor = '#dee2e6';
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            uploadArea.style.borderColor = '#dee2e6';
+            
+            const dt = e.dataTransfer;
+            const files = dt.files;
+
+            if (files.length) {
+                fileInput.files = files;
+                handleFileChange({ target: fileInput });
+            }
+        });
+
+        fileInput.addEventListener('change', handleFileChange);
+    });
+
+    function handleFileChange(event) {
+        const file = event.target.files[0];
+        const type = event.target.id.replace('File', '');
+        const fileNameElement = document.getElementById(`${type}FileName`);
+        const textElement = document.getElementById(`${type}Text`);
+
+        if (file) {
+            fileNameElement.textContent = file.name;
+            fileNameElement.style.display = 'block';
+            textElement.style.display = 'none';
+
+            if (type === 'excel') {
+                excelData = file;
+            } else {
+                wordData = file;
+            }
+
+            if (excelData && wordData) {
+                const formData = new FormData();
+                formData.append('excel', excelData);
+                formData.append('word', wordData);
+
+                document.getElementById('loadingOverlay').style.display = 'flex';
+                
+                fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        throw new Error(data.error);
+                    }
+                    setupMapping(data);
+                })
+                .catch(error => {
+                    showStatus('error', 'Σφάλμα: ' + error.message);
+                })
+                .finally(() => {
+                    document.getElementById('loadingOverlay').style.display = 'none';
+                });
+            }
+        }
+    }
+
+    function setupMapping(data) {
+        // Setup key column dropdown
+        const keyColumnSelect = document.getElementById('keyColumn');
+        keyColumnSelect.innerHTML = data.columns.map(col => 
+            `<option value="${col}">${col}</option>`
+        ).join('');
+
+        // Setup placeholder mappings
+        const mappingContainer = document.getElementById('mappingContainer');
+        mappingContainer.innerHTML = data.placeholders.map(placeholder => `
+            <div class="mb-3">
+                <label class="form-label">${placeholder}</label>
+                <select class="form-select" data-placeholder="${placeholder}">
+                    ${data.columns.map(col => `<option value="${col}">${col}</option>`).join('')}
+                </select>
+            </div>
+        `).join('');
+
+        // Show mapping and export sections
+        document.getElementById('mappingCard').style.display = 'block';
+        document.getElementById('exportCard').style.display = 'block';
+        document.getElementById('generateBtn').style.display = 'inline-block';
+
+        // Store paths
+        document.getElementById('generateBtn').dataset.excelPath = data.excel_path;
+        document.getElementById('generateBtn').dataset.wordPath = data.word_path;
+    }
+
+    function showStatus(type, message) {
+        const statusDiv = document.getElementById('statusMessage');
+        statusDiv.className = `alert mt-3 alert-${type === 'error' ? 'danger' : 'success'}`;
+        statusDiv.textContent = message;
+        statusDiv.style.display = 'block';
+        
+        if (type !== 'error') {
+            setTimeout(() => {
+                statusDiv.style.display = 'none';
+            }, 5000);
+        }
+    }
+
+    // Generate Documents
+    document.getElementById('generateBtn').addEventListener('click', function() {
+        const mappings = {};
+        document.querySelectorAll('#mappingContainer select').forEach(select => {
+            mappings[select.dataset.placeholder] = select.value;
+        });
+
+        const data = {
+            excel_path: this.dataset.excelPath,
+            word_path: this.dataset.wordPath,
+            mappings: mappings,
+            key_column: document.getElementById('keyColumn').value,
+            export_formats: {
+                docx: document.getElementById('exportWord').checked,
+                pdf: document.getElementById('exportPdf').checked
+            }
+        };
+
+        if (!data.export_formats.docx && !data.export_formats.pdf) {
+            showStatus('error', 'Παρακαλώ επιλέξτε τουλάχιστον μία μορφή εξαγωγής (Word ή PDF)');
+            return;
+        }
+
+        document.getElementById('loadingOverlay').style.display = 'flex';
+
+        fetch('/generate', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(data => {
+                    throw new Error(data.error || 'Unknown error occurred');
+                });
+            }
+            return response.blob();
+        })
+        .then(blob => {
+            // Create a link and click it to start the download
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            a.download = 'generated_documents.zip';
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            showStatus('success', 'Η δημιουργία των εγγράφων ολοκληρώθηκε με επιτυχία!');
+        })
+        .catch(error => {
+            showStatus('error', 'Σφάλμα: ' + error.message);
+        })
+        .finally(() => {
+            document.getElementById('loadingOverlay').style.display = 'none';
+        });
+    });
+});
+</script>
+{% endblock %} 
