@@ -1,4 +1,7 @@
 Flask==3.0.2
-pandas==2.2.1
+pandas==2.2.3
 openpyxl==3.1.2
-Werkzeug==3.0.1 
+Werkzeug==3.0.1
+python-docx==0.8.11
+docx2pdf==0.1.8
+python-dotenv==1.0.0 
