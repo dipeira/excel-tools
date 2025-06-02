@@ -6,12 +6,12 @@ import zipfile
 from docx import Document
 import tempfile
 from docx2pdf import convert
-import pythoncom
 import shutil
 import time
 import io
 import uuid
 from datetime import datetime, timedelta
+import platform
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'uploads'
@@ -311,28 +311,36 @@ def generate_documents():
                 
                 # Convert to PDF if requested
                 if export_formats.get('pdf'):
-                    # Initialize COM for each conversion
-                    pythoncom.CoInitialize()
-                    try:
-                        if not export_formats.get('docx'):
-                            # If we don't want DOCX, save it temporarily
-                            docx_path = os.path.join(temp_dir, f"{base_filename}_temp.docx")
-                            doc.save(docx_path)
-                        
-                        pdf_path = os.path.join(temp_dir, f"{base_filename}.pdf")
-                        convert(docx_path, pdf_path)
-                        output_files.append(pdf_path)
-                        
-                        # Clean up temporary DOCX if we didn't want it
-                        if not export_formats.get('docx'):
-                            try:
-                                os.remove(docx_path)
-                            except OSError:
-                                pass
-                    finally:
-                        pythoncom.CoUninitialize()
+                    if platform.system() == 'Windows':
+                        # Initialize COM for each conversion
+                        try:
+                            if not export_formats.get('docx'):
+                                # If we don't want DOCX, save it temporarily
+                                docx_path = os.path.join(temp_dir, f"{base_filename}_temp.docx")
+                                doc.save(docx_path)
 
-            # Create a temporary file for the ZIP
+                            pdf_path = os.path.join(temp_dir, f"{base_filename}.pdf")
+                            convert(docx_path, pdf_path)
+                            output_files.append(pdf_path)
+
+                            # Clean up temporary DOCX if we didn't want it
+                            if not export_formats.get('docx'):
+                                try:
+                                    os.remove(docx_path)
+                                except OSError:
+                                    pass
+                        finally:
+                            pass
+                    else:
+                        # Use LibreOffice for PDF conversion on non-Windows systems
+                        docx_path = os.path.join(temp_dir, f"{base_filename}.docx")
+                        doc.save(docx_path)
+                        pdf_path = os.path.join(temp_dir, f"{base_filename}.pdf")
+                        command = f'libreoffice --headless --convert-to pdf:writer_pdf_Export "{docx_path}" --outdir "{temp_dir}"'
+                        os.system(command)
+                        output_files.append(pdf_path)
+
+           # Create a temporary file for the ZIP
             zip_buffer = io.BytesIO()
             
             # Create the ZIP file in memory
