@@ -1,3 +1,13 @@
+# Εργαλεία Excel
+
+- 1. Σύγκριση αρχείων 
+- 2. Συγχώνευση αρχείων
+- 3. Φιλτράρισμα αρχείων βάσει στήλης
+- 4. Διαχωρισμός αρχείων βάσει στήλης
+- 5. Δημιουργία αρχείων word/pdf από excel+word
+
+
+
 # Excel Tools
 
 A web application for processing Excel files with various tools.
@@ -24,6 +34,11 @@ A web application for processing Excel files with various tools.
 - Each unique value gets its own Excel file
 - All split files are packaged into a zip file for easy download
 
+### 5. Docx + xlsx to word/pdf documents (Mail merge alternative)
+- Create a word template
+- Merge data from an Excel file into the template
+- Export the merged documents as word/pdf files
+
 ## Technical Details
 
 ### Dependencies
@@ -43,18 +58,6 @@ A web application for processing Excel files with various tools.
    ```
    python app.py
    ```
-
-### File Structure
-- `app.py`: Main Flask application
-- `templates/`: HTML templates
-  - `base.html`: Base template with common layout
-  - `index.html`: Home page with tool cards
-  - `compare.html`: Compare files interface
-  - `join.html`: Join files interface
-  - `filter.html`: Filter file interface
-  - `split.html`: Split file interface
-- `uploads/`: Directory for temporary file storage
-  - `split_files/`: Directory for split Excel files
 
 ### Security Features
 - File type validation (.xlsx, .xls)

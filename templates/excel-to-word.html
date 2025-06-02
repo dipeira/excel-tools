@@ -1,11 +1,11 @@
 {% extends "base.html" %}
 
-{% block title %}Excel σε Word/PDF{% endblock %}
+{% block title %}Word+Excel σε έγγραφα Word/PDF{% endblock %}
 
 {% block content %}
 <div class="container">
-    <h1 class="mb-4">Excel σε Word/PDF</h1>
-    <p class="lead mb-4">Δημιουργήστε πολλαπλά έγγραφα Word/PDF από ένα αρχείο Excel και ένα πρότυπο Word.</p>
+    <h1 class="mb-4">Word+Excel σε έγγραφα Word/PDF</h1>
+    <p class="lead mb-4">Δημιουργήστε πολλαπλά έγγραφα Word/PDF από ένα αρχείο Excel και ένα πρότυπο Word (συγχώνευση αλληλογραφίας).</p>
 
     <!-- File Upload Section -->
     <div class="card mb-4">
@@ -200,7 +200,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 document.getElementById('loadingOverlay').style.display = 'flex';
                 
-                fetch('/upload', {
+                fetch('/upload-xls-docx', {
                     method: 'POST',
                     body: formData
                 })

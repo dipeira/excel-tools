@@ -208,7 +208,26 @@ def split_by_column_page():
     return render_template('split.html')
 
 @app.route('/upload', methods=['POST'])
-def upload_files():
+def upload_file():
+    if 'file' not in request.files:
+        return jsonify({'error': 'Δεν υπάρχει τμήμα αρχείου'}), 400
+    
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({'error': 'Δεν έχει επιλεγεί αρχείο'}), 400
+    
+    if file and file.filename.endswith('.xlsx'):
+        filename = secure_filename(file.filename)
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        file.save(file_path)
+        
+        columns = get_column_names(file_path)
+        return jsonify({'columns': columns, 'filename': filename})
+    
+    return jsonify({'error': 'Μη έγκυρος τύπος αρχείου'}), 400
+
+@app.route('/upload-xls-docx', methods=['POST'])
+def upload_files_xls_docx():
     if 'excel' not in request.files or 'word' not in request.files:
         return jsonify({'error': 'Missing files'}), 400
     

@@ -29,8 +29,9 @@
         .footer a:hover {
             text-decoration: underline;
         }
+        {% block additional_styles %}{% endblock %}
     </style>
-    {% block additional_styles %}{% endblock %}
+    
 </head>
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
@@ -68,6 +69,7 @@
     <footer class="footer">
         <div class="container text-center">
             <a href="https://dipeira.gov.gr" target="_blank">© ΔΙ.Π.Ε. Ηρακλείου - Τμήμα Δ' Πληροφορικής & νέων Τεχνολογιών</a>, 2025
+            <a href="https://github.com/dipeira/excel-tools" target="_blank" style="margin-left: 5px;"><i class="fab fa-github"></i></a>
         </div>
     </footer>
 
