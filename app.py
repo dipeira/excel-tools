@@ -149,12 +149,16 @@ def compare_files(file1_path, file2_path, col1, col2):
     
     # Find records in file2 not in file1
     not_in_file1 = df2[~df2[col2].isin(df1[col1])]
+
+    # Find records in file1 and in file2
+    in_both = df1[df1[col1].isin(df2[col2])]
     
     # Create output Excel file
     output_path = os.path.join(app.config['UPLOAD_FOLDER'], 'comparison_result.xlsx')
     with pd.ExcelWriter(output_path) as writer:
-        not_in_file2.to_excel(writer, sheet_name='Not in File 2', index=False)
-        not_in_file1.to_excel(writer, sheet_name='Not in File 1', index=False)
+        not_in_file2.to_excel(writer, sheet_name='Όχι στο αρχείο 2', index=False)
+        not_in_file1.to_excel(writer, sheet_name='Όχι στο αρχείο 1', index=False)
+        in_both.to_excel(writer, sheet_name='Κοινά', index=False)
     
     return output_path
 
