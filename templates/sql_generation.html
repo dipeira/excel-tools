@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block title %}Παραγωγή SQL{% endblock %}
+{% block content %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Παραγωγή SQL</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Παραγωγή SQL</h1>
+        <form method="post" enctype="multipart/form-data" action="/sql-generation">
+            <div class="form-group">
+                <label for="file">Επιλέξτε αρχείο Excel:</label>
+                <input type="file" class="form-control-file" id="file" name="file">
+            </div>
+            <button type="submit" class="btn btn-primary">Ανέβασμα</button>
+        </form>
+        {% if columns %}
+
+            <!-- add a divider-->
+            <hr/>
+            <form method="post" action="/generate-sql">
+                <input type="hidden" name="filename" value="{{ filename }}">
+                <div class="form-group row">
+                    <label for="table_name" class="col-sm-2 col-form-label">Όνομα πίνακα:</label>
+                    <div class="col-sm-4">
+                      <input type="text" class="form-control" id="table_name" name="table_name" required>
+                    </div>
+                </div>
+                <h3>Στήλες Excel <-> Πεδία πίνακα</h3>
+                <p>Αναγράψτε δίπλα σε μία ή περισσότερες στήλες του αρχείου Excel, τα πεδία που θέλετε να ενημερωθούν στον πίνακα της βάσης δεδομένων.</p>
+                {% for column in columns %}
+                    <div class="form-group row">
+                        <label for="{{ column }}" class="col-sm-2 col-form-label">{{ column }}:</label>
+                        <div class="col-sm-4">
+                          <input type="text" class="form-control" id="{{ column }}" name="{{ column }}">
+                        </div>
+                    </div>
+                {% endfor %}
+                <hr/>
+                <div class="form-group row">
+                    <label for="key_column" class="col-sm-2 col-form-label">Στήλη κλειδί:</label>
+                    <div class="col-sm-4">
+                      <select class="form-control" id="key_column" name="key_column" required>
+                          {% for column in columns %}
+                              <option value="{{ column }}">{{ column }}</option>
+                          {% endfor %}
+                      </select>
+                    </div>
+                </div>
+                <div class="form-group row">
+                    <label for="key_column_name" class="col-sm-2 col-form-label">Όνομα στήλης κλειδιού στον πίνακα:</label>
+                    <div class="col-sm-4">
+                      <input type="text" class="form-control" id="key_column_name" name="key_column_name" required>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-success">Δημιουργία SQL</button>
+            </form>
+        {% endif %}
+        {% if download_link %}
+            <a href="{{ download_link.url }}" class="btn btn-info" download="{{ download_link.filename }}">
+                Λήψη αρχείου SQL
+            </a>
+        {% endif %}
+        {% if error %}
+            <div class="alert alert-danger">{{ error }}</div>
+        {% endif %}
+    </div>
+</body>
+</html>
+
+{% endblock %} 

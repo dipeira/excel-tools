@@ -579,6 +579,69 @@ def split():
     except Exception as e:
         return render_template('split.html', error=f'Σφάλμα κατά την επεξεργασία του αρχείου: {str(e)}')
 
+# Route for the SQL generation page
+@app.route('/sql-generation', methods=['GET', 'POST'])
+def sql_generation_page():
+    if request.method == 'POST':
+        if 'file' not in request.files:
+            return render_template('sql_generation.html', error='Δεν υπάρχει τμήμα αρχείου')
+
+        file = request.files['file']
+        if file.filename == '':
+            return render_template('sql_generation.html', error='Δεν έχει επιλεγεί αρχείο')
+
+        if file and file.filename.endswith('.xlsx'):
+            filename = secure_filename(file.filename)
+            file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            file.save(file_path)
+
+            columns = get_column_names(file_path)
+            return render_template('sql_generation.html', columns=columns, filename=filename)
+
+        return render_template('sql_generation.html', error='Μη έγκυρος τύπος αρχείου')
+    return render_template('sql_generation.html')
+
+
+# Route for generating SQL statements based on user input (called by form submission)
+@app.route('/generate-sql', methods=['POST'])
+def generate_sql():
+    filename = request.form.get('filename')
+    table_name = request.form.get('table_name')
+    key_column = request.form.get('key_column')
+    key_column_name = request.form.get('key_column_name')
+
+    if not all([filename, table_name, key_column, key_column_name]):
+        return render_template('sql_generation.html', error='Missing required data')
+
+    file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+    try:
+        df = pd.read_excel(file_path)
+        sql_statements = []
+        for index, row in df.iterrows():
+            set_clauses = []
+            for column in df.columns:
+                if column != key_column and request.form.get(column):
+                    table_column = request.form.get(column)
+                    set_clauses.append(f"{table_column}='{row[column]}'")
+            
+            if set_clauses:
+                update_statement = f"UPDATE {table_name} SET {', '.join(set_clauses)} WHERE {key_column_name}='{row[key_column]}';"
+                sql_statements.append(update_statement)
+
+        # Add SQL statements to a new column in the DataFrame
+        df['sql_statement'] = sql_statements
+
+        # Create a new Excel file with the SQL statements
+        output_filename = f"sql_generated_{filename}"
+        output_path = os.path.join(app.config['UPLOAD_FOLDER'], output_filename)
+        df.to_excel(output_path, index=False)
+
+        download_link = {'url': url_for('download_file', filename=output_filename), 'filename': output_filename}
+        return render_template('sql_generation.html', download_link=download_link)
+
+    except Exception as e:
+        return render_template('sql_generation.html', error=str(e))
+
 @app.route('/excel-to-word')
 def excel_to_word_page():
     return render_template('excel-to-word.html')
